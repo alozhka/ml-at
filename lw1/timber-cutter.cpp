@@ -3,23 +3,17 @@
 #include <ostream>
 #include <vector>
 
-class TimberCutter
-{
-  static void CutInternal(std::vector<int>& timbers, const int times, int cost, int& minCost)
-  {
-    if (times == 0)
-    {
-      if (cost < minCost)
-      {
+class TimberCutter {
+  static void CutInternal(std::vector<int> &timbers, const int times, int cost, int &minCost) {
+    if (times == 0) {
+      if (cost < minCost) {
         minCost = cost;
       }
       return;
     }
 
-    for (int i = 0; i < timbers.size(); i++)
-    {
-      for (int j = 1; j < timbers[i]; j++)
-      {
+    for (int i = 0; i < timbers.size(); i++) {
+      for (int j = 1; j < timbers[i]; j++) {
         int left = j;
         int right = timbers[i] - j;
 
@@ -32,11 +26,11 @@ class TimberCutter
       }
     }
   }
+
 public:
-  static int Cut(const int length, const int times)
-  {
+  static int Cut(const int length, const int times) {
     int cost = INT_MAX;
-    std::vector timbers = { length };
+    std::vector timbers = {length};
 
     CutInternal(timbers, times, 0, cost);
 
@@ -44,7 +38,6 @@ public:
   }
 };
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
   std::cout << TimberCutter::Cut(std::atoi(argv[1]), std::atoi(argv[2])) << std::endl;
 }
