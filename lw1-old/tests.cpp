@@ -1,5 +1,5 @@
 #define CATCH_CONFIG_MAIN
-#include "pch.h"
+#include "../shared/catch2/catch.hpp"
 #include "timber-cutter.cpp"
 
 
