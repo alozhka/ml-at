@@ -1,40 +1,45 @@
 #include <climits>
 #include <iostream>
 #include <ostream>
+#include <stack>
 #include <vector>
 
 class TimberCutter {
-  static void CutInternal(std::vector<int> &timbers, const int times, int cost, int &minCost) {
-    if (times == 0) {
-      if (cost < minCost) {
-        minCost = cost;
-      }
-      return;
-    }
-
-    for (int i = 0; i < timbers.size(); i++) {
-      for (int j = 1; j < timbers[i]; j++) {
-        int left = j;
-        int right = timbers[i] - j;
-
-        std::vector<int> newTimbers = {};
-        std::ranges::copy(timbers, std::back_inserter(newTimbers));
-        auto it = newTimbers.erase(newTimbers.begin() + i);
-        newTimbers.insert(it, {left, right});
-
-        CutInternal(newTimbers, times - 1, cost + timbers[i], minCost);
-      }
-    }
-  }
-
 public:
-  static int Cut(const int length, const int times) {
-    int cost = INT_MAX;
+  static int Cut(const int length, const int timesToCut) {
+    int minCost = INT_MAX;
     std::vector timbers = {length};
+    // [timbers, times, cost]
+    std::stack<std::tuple<std::vector<int>, int, int>> dataStack = {};
+    dataStack.emplace(timbers, timesToCut, 0);
 
-    CutInternal(timbers, times, 0, cost);
+    while (!dataStack.empty()) {
+      auto [timbers, times, cost] = dataStack.top();
+      dataStack.pop();
 
-    return cost;
+      if (times == 0) {
+        if (cost < minCost) {
+          minCost = cost;
+        }
+        continue;
+      }
+
+      for (int i = 0; i < timbers.size(); i++) {
+        for (int j = 1; j < timbers[i]; j++) {
+          int left = j;
+          int right = timbers[i] - j;
+
+          std::vector<int> newTimbers = {};
+          std::ranges::copy(timbers, std::back_inserter(newTimbers));
+          auto it = newTimbers.erase(newTimbers.begin() + i);
+          newTimbers.insert(it, {left, right});
+
+          dataStack.emplace(newTimbers, times - 1, cost + timbers[i]);
+        }
+      }
+    }
+
+    return minCost;
   }
 };
 
