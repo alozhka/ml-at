@@ -43,9 +43,14 @@ public:
       }
 
       for (int i = 0; i < timbers.size(); i++) {
-        for (int j = 1; j <= std::floor(timbers[i] / 2); j++) {
-          int left = j;
-          int right = timbers[i] - j;
+          int left, right, middle = std::floor(timbers[i] / 2);
+          if (times <= middle) {
+            left = times;
+            right = timbers[i] - times;
+          } else {
+            left = middle;
+            right = timbers[i] - middle;
+          }
           int newCost = cost + timbers[i];
 
           if (newCost >= minCost) {
@@ -62,7 +67,6 @@ public:
           }
 
           dataStack.emplace(newTimbers, times - 1, newCost);
-        }
       }
     }
 
