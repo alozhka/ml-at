@@ -4,9 +4,10 @@
 
 14.10. Распил бруса 2 (10)
 На пилораму привезли брус длиной L метров. Требуется сделать N распилов.
-Распилы делят брус на части, длина которых выражается натуральными числами. Стоимость одного распила равна длине распиливаемого бруса. Определить минимальную стоимость распила.
-Ввод. В первой строке содержатся через пробел натуральные числа L (2 ≤ L ≤ 106) и N (N < L) – длина бруса и число распилов.
-Вывод. В единственной строке вывести минимальную стоимость распилов.
+Распилы делят брус на части, длина которых выражается натуральными числами. Стоимость одного распила равна длине
+распиливаемого бруса. Определить минимальную стоимость распила. Ввод. В первой строке содержатся через пробел
+натуральные числа L (2 ≤ L ≤ 106) и N (N < L) – длина бруса и число распилов. Вывод. В единственной строке вывести
+минимальную стоимость распилов.
 
 Примеры
 Ввод 1         Ввод 2
@@ -35,10 +36,9 @@ public:
       auto [timbers, times, cost] = dataStack.top();
       dataStack.pop();
 
-      if (times == 0) {
-        if (cost < minCost) {
-          minCost = cost;
-        }
+      if (times == 1) {
+        const int minLog = *std::min_element(timbers.begin(), timbers.end());
+        minCost = std::min(minLog + cost, minCost);
         continue;
       }
 
@@ -54,8 +54,12 @@ public:
 
           std::vector newTimbers{timbers};
           newTimbers.erase(newTimbers.begin() + i);
-          newTimbers.push_back(left);
-          newTimbers.push_back(right);
+          if (left > 1) {
+            newTimbers.push_back(left);
+          }
+          if (right > 1) {
+            newTimbers.push_back(right);
+          }
 
           dataStack.emplace(newTimbers, times - 1, newCost);
         }
