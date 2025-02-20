@@ -18,39 +18,39 @@
 
 #include <cmath>
 #include <iostream>
-#include <list>
 #include <ostream>
+#include <vector>
 
 class TimberCutter {
 public:
   static int Cut(const int length, int times) {
     int cost = 0;
-    std::list timbers = {length};
-    // [timbers, times, cost]
+    std::vector timbers = {length};
 
     while (times > 1) {
       int left, right;
+      const int timber = timbers.back(), middle = timber / 2;
 
-      if (const int middle = timbers.front() / 2; times <= middle) {
+      if (times <= middle) {
         left = times;
-        right = timbers.front() - times;
+        right = timber - times;
       } else {
         left = middle;
-        right = timbers.front() - middle;
+        right = timber - middle;
       }
       times--;
-      cost += timbers.front();
+      cost += timber;
 
-      timbers.pop_front();
+      timbers.pop_back();
       if (right > 1) {
-        timbers.push_front(right);
+        timbers.push_back(right);
       }
       if (left > 1) {
-        timbers.push_front(left);
+        timbers.push_back(left);
       }
     }
 
-    cost += timbers.front();
+    cost += timbers.back();
     return cost;
   }
 };
