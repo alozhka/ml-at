@@ -16,61 +16,42 @@
 105            18
 */
 
-#include <climits>
 #include <cmath>
 #include <iostream>
+#include <list>
 #include <ostream>
-#include <stack>
-#include <vector>
 
 class TimberCutter {
 public:
-  static int Cut(const int length, const int timesToCut) {
-    int minCost = INT_MAX;
-    std::vector timbers = {length};
+  static int Cut(const int length, int times) {
+    int cost = 0;
+    std::list timbers = {length};
     // [timbers, times, cost]
-    std::stack<std::tuple<std::vector<int>, int, int>> dataStack = {};
-    dataStack.emplace(timbers, timesToCut, 0);
 
-    while (!dataStack.empty()) {
-      auto [timbers, times, cost] = dataStack.top();
-      dataStack.pop();
+    while (times > 1) {
+      int left, right;
 
-      if (times == 1) {
-        const int minLog = *std::min_element(timbers.begin(), timbers.end());
-        minCost = std::min(minLog + cost, minCost);
-        continue;
+      if (const int middle = timbers.front() / 2; times <= middle) {
+        left = times;
+        right = timbers.front() - times;
+      } else {
+        left = middle;
+        right = timbers.front() - middle;
       }
+      times--;
+      cost += timbers.front();
 
-      for (int i = 0; i < timbers.size(); i++) {
-          int left, right, middle = std::floor(timbers[i] / 2);
-          if (times <= middle) {
-            left = times;
-            right = timbers[i] - times;
-          } else {
-            left = middle;
-            right = timbers[i] - middle;
-          }
-          int newCost = cost + timbers[i];
-
-          if (newCost >= minCost) {
-            continue;
-          }
-
-          std::vector newTimbers{timbers};
-          newTimbers.erase(newTimbers.begin() + i);
-          if (left > 1) {
-            newTimbers.push_back(left);
-          }
-          if (right > 1) {
-            newTimbers.push_back(right);
-          }
-
-          dataStack.emplace(newTimbers, times - 1, newCost);
+      timbers.pop_front();
+      if (right > 1) {
+        timbers.push_front(right);
+      }
+      if (left > 1) {
+        timbers.push_front(left);
       }
     }
 
-    return minCost;
+    cost += timbers.front();
+    return cost;
   }
 };
 
