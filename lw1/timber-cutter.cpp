@@ -16,7 +16,7 @@
 105            18
 */
 
-#include <cmath>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -55,6 +55,11 @@ public:
   }
 };
 
-int main(int argc, char *argv[]) {
-  std::cout << TimberCutter::Cut(std::atoi(argv[1]), std::atoi(argv[2])) << std::endl;
+int main(int _, char *argv[]) {
+  int length, times;
+  std::ifstream in(argv[1]);
+  in >> length;
+  in >> times;
+
+  std::cout << TimberCutter::Cut(length, times) << std::endl;
 }
