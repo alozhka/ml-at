@@ -31,7 +31,7 @@ public:
       int left, right;
       const int timber = timbers.back(), middle = timber / 2;
 
-      if (times <= middle) {
+      if (times < middle) {
         left = times;
         right = timber - times;
       } else {
@@ -58,8 +58,12 @@ public:
 int main(int _, char *argv[]) {
   int length, times;
   std::ifstream in(argv[1]);
+  std::ofstream out(argv[2]);
   in >> length;
   in >> times;
 
-  std::cout << TimberCutter::Cut(length, times) << std::endl;
+  out << TimberCutter::Cut(length, times) << std::endl;
+  out.close();
+
+  return 0;
 }

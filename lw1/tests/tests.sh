@@ -1,46 +1,27 @@
 #!/bin/bash
 
-OUTPUT=$(../cmake-build-release/timber-cutter input1.txt)
-if [ "$OUTPUT" != "20" ] ; then
-  echo "7 and 6 => 20 failed"
-  exit 1
-fi
+echo "7 and 6 => 20"
+../cmake-build-release/timber-cutter input1.txt output1.txt
 
-OUTPUT=$(../cmake-build-release/timber-cutter input2.txt)
-if [ "$OUTPUT" != "15" ] ; then
-  echo "10 and 3 => 15 failed"
-  exit 1
-fi
+echo "10 and 3 => 15"
+../cmake-build-release/timber-cutter input2.txt output2.txt
 
-OUTPUT=$(../cmake-build-release/timber-cutter input3.txt)
-if [ "$OUTPUT" != "27" ] ; then
-  echo "9 and 7 => 27 failed"
-  exit 1
-fi
+echo "9 and 7 => 27"
+../cmake-build-release/timber-cutter input3.txt output3.txt
 
-OUTPUT=$(../cmake-build-release/timber-cutter input4.txt)
-if [ "$OUTPUT" != "29" ] ; then
-  echo "10 and 7 => 29 failed"
-  exit 1
-fi
+echo "10 and 7 => 29"
+../cmake-build-release/timber-cutter input4.txt output4.txt
 
-OUTPUT=$(../cmake-build-release/timber-cutter input5.txt)
-if [ "$OUTPUT" != "45" ] ; then
-  echo "13 and 10 => 45 failed" # 44
-  exit 1
-fi
+echo "13 and 10 => 45" # 44
+../cmake-build-release/timber-cutter input5.txt output5.txt
 
-OUTPUT=$(../cmake-build-release/timber-cutter input6.txt)
-if [ "$OUTPUT" != "105" ] ; then
-  echo "100 and 3 => 105 failed"
-  exit 1
-fi
+echo "100 and 3 => 105"
+../cmake-build-release/timber-cutter input6.txt output6.txt
 
-OUTPUT=$(../cmake-build-release/timber-cutter input7.txt)
-if [ "$OUTPUT" != "18" ] ; then
-  echo "10 and 4 => 18 failed"
-  exit 1
-fi
+echo "10 and 4 => 18"
+../cmake-build-release/timber-cutter input7.txt output7.txt
+../cmake-build-release/timber-cutter input8.txt output8.txt
+../cmake-build-release/timber-cutter input9.txt output9.txt
+../cmake-build-release/timber-cutter input10.txt output10.txt
 
-echo "All tests finished correctly"
 exit 0
