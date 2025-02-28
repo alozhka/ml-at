@@ -17,53 +17,48 @@
 */
 
 #include <fstream>
-#include <iostream>
 #include <ostream>
 #include <vector>
 
-class TimberCutter {
+class TimberCutter
+{
 public:
-  static int Cut(const int length, int times) {
-    int cost = 0;
-    std::vector timbers = {length};
+	static int Cut(const int length, const int times)
+	{
+		size_t cost = 0;
+		std::priority_queue<int, std::vector<int>, std::greater<>> timbers;
+		for (int i = 0; i < times; i++)
+		{
+			timbers.push(1);
+		}
+		timbers.push(length - times);
 
-    while (times > 1) {
-      int left, right;
-      const int timber = timbers.back(), middle = timber / 2;
+		while (timbers.size() > 1)
+		{
+			const int left = timbers.top();
+			timbers.pop();
+			const int right = timbers.top();
+			timbers.pop();
 
-      if (times < middle) {
-        left = times;
-        right = timber - times;
-      } else {
-        left = middle;
-        right = timber - middle;
-      }
-      times--;
-      cost += timber;
+			int connectedTimber = left + right;
+			cost += connectedTimber;
+			timbers.push(connectedTimber);
+		}
 
-      timbers.pop_back();
-      if (right > 1) {
-        timbers.push_back(right);
-      }
-      if (left > 1) {
-        timbers.push_back(left);
-      }
-    }
-
-    cost += timbers.back();
-    return cost;
-  }
+		return cost;
+	}
 };
 
-int main(int _, char *argv[]) {
-  int length, times;
-  std::ifstream in(argv[1]);
-  std::ofstream out(argv[2]);
-  in >> length;
-  in >> times;
+int main(int _, char* argv[])
+{
+	int length, times;
+	std::ifstream in(argv[1]);
+	std::ofstream out(argv[2]);
+	in >> length;
+	in >> times;
 
-  out << TimberCutter::Cut(length, times) << std::endl;
-  out.close();
+	out << TimberCutter::Cut(length, times) << std::endl;
+	out.close();
 
-  return 0;
+	return 0;
 }
