@@ -57,6 +57,7 @@ int main(int _, char* argv[])
 	std::ofstream out(argv[2]);
 	in >> length;
 	in >> times;
+	in.close();
 
 	out << TimberCutter::Cut(length, times) << std::endl;
 	out.close();
