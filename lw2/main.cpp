@@ -57,152 +57,129 @@
 
 #include <iostream>
 #include <vector>
-#include <queue>
-using namespace std;
 
-typedef pair<int,int> pii;
+using Lake = std::vector<std::string>;
+using Mask = std::vector<std::vector<bool>>;
 
-// Функция, выполняющая заливку (BFS) с 4-связью или 8-связью.
-// Если eight = true – используем 8 направлений, иначе 4 направления.
-void floodFill(const vector<vector<char>> &grid, vector<vector<bool>> &vis, bool eight) {
-    int R = grid.size(), C = grid[0].size();
-    queue<pii> q;
-    // Запускаем с клеток на границе расширенного прямоугольника
-    for (int i = 0; i < R; i++) {
-        for (int j = 0; j < C; j++) {
-            if ((i == 0 || j == 0 || i == R-1 || j == C-1) && grid[i][j] == '.' && !vis[i][j]) {
-                vis[i][j] = true;
-                q.push({i,j});
-            }
-        }
-    }
-    // Направления: для 4-связи
-    int d4[4][2] = { {1,0}, {-1,0}, {0,1}, {0,-1} };
-    // Если 8-связь – включаем диагонали
-    int d8[8][2] = { {1,0}, {-1,0}, {0,1}, {0,-1}, {1,1}, {1,-1}, {-1,1}, {-1,-1} };
-    
-    while(!q.empty()){
-        auto [r, c] = q.front();
-        q.pop();
-        if(eight){
-            for (int k = 0; k < 8; k++){
-                int nr = r + d8[k][0], nc = c + d8[k][1];
-                if(nr >= 0 && nr < R && nc >= 0 && nc < C)
-                    if(grid[nr][nc]=='.' && !vis[nr][nc]){
-                        vis[nr][nc] = true;
-                        q.push({nr,nc});
-                    }
-            }
-        } else {
-            for (int k = 0; k < 4; k++){
-                int nr = r + d4[k][0], nc = c + d4[k][1];
-                if(nr >= 0 && nr < R && nc >= 0 && nc < C)
-                    if(grid[nr][nc]=='.' && !vis[nr][nc]){
-                        vis[nr][nc] = true;
-                        q.push({nr,nc});
-                    }
-            }
-        }
-    }
+namespace Directions
+{
+constexpr std::array<std::array<int, 2>, 4> FourDirections = {
+	{ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }
+};
+constexpr std::array<std::array<int, 2>, 8> EightDirections = {
+	{ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } }
+};
+} // namespace Directions
+
+Lake InitLake(const size_t rows, const size_t columns)
+{
+	Lake l;
+
+	l.emplace_back(columns + 2, '.');
+
+	for (size_t i = 0; i < rows; i++)
+	{
+		std::string row;
+		std::cin >> row;
+		l.push_back('.' + row.substr(0, columns) + '.');
+	}
+
+	l.emplace_back(columns + 2, '.');
+
+	return l;
 }
 
-// Для данной вершины (координаты в пространстве вершин расширенного поля)
-// функция проверяет: существует ли хотя бы один соседний квадрат (из 4, сдвигами (-1,-1), (-1,0), (0,-1), (0,0)),
-// который является землёй ('.') и имеет метку внешности по 4-связи (t1) или по 8-связи (t2).
-// Обратите внимание: grid, t1, t2 имеют размер (m+2) x (n+2) – клетки расширенного прямоугольника.
-pair<bool,bool> checkVertex(int r, int c, const vector<vector<char>> &grid,
-                              const vector<vector<bool>> &t1,
-                              const vector<vector<bool>> &t2) {
-    bool hasT1 = false, hasT2 = false;
-    int R = grid.size(), C = grid[0].size();
-    // Рассмотрим квадраты, соседние с вершиной (r, c):
-    // возможные координаты верхнего левого угла: (r-1, c-1), (r-1, c), (r, c-1), (r, c)
-    for (int dr = -1; dr <= 0; dr++){
-        for (int dc = -1; dc <= 0; dc++){
-            int nr = r + dr, nc = c + dc;
-            if(nr >= 0 && nr < R && nc >= 0 && nc < C){
-                if(grid[nr][nc] == '.') {
-                    if(t1[nr][nc]) hasT1 = true;
-                    if(t2[nr][nc]) hasT2 = true;
-                }
-            }
-        }
-    }
-    return {hasT1, hasT2};
+Mask MaskLakeInFourDirections(const Lake& lake, const size_t rows, const size_t columns)
+{
+	Mask mask;
+	mask.assign(rows, std::vector(columns, false));
+	std::queue<std::pair<int, int>> queue;
+	queue.emplace(0, 0);
+
+	while (!queue.empty())
+	{
+		const auto [row, col] = queue.front();
+		queue.pop();
+
+		for (size_t d = 0; d < 4; d++)
+		{
+			int newRow = row + Directions::FourDirections[d][0];
+			int newCol = col + Directions::FourDirections[d][1];
+
+			if (0 <= newRow && newRow < rows && 0 <= newCol && newCol < columns)
+			{
+				if (lake[newRow][newCol] == '.' && !mask[newRow][newCol])
+				{
+					mask[newRow][newCol] = true;
+					queue.emplace(newRow, newCol);
+				}
+			}
+		}
+	}
+
+	return mask;
 }
 
-int main(){
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+Mask MaskLakeInEightDirections(const Lake& lake, const size_t rows, const size_t columns)
+{
+	Mask mask;
+	mask.assign(rows, std::vector(columns, false));
+	std::queue<std::pair<int, int>> queue;
+	queue.emplace(0, 0);
 
-    int k;
-    cin >> k;
-    // Будем сохранять ответы для всех озер
-    vector<int> ans(k, 2);
-    for (int idx = 0; idx < k; idx++){
-        int m, n;
-        cin >> m >> n;
-        // Создаем расширенное поле размером (m+2) x (n+2)
-        vector<vector<char>> grid(m+2, vector<char>(n+2, '.'));
-        // Заполняем внутреннюю часть входными данными
-        for (int i = 1; i <= m; i++){
-            string line;
-            cin >> line;
-            for (int j = 1; j <= n; j++){
-                grid[i][j] = line[j-1];
-            }
-        }
-        int R = m+2, C = n+2;
-        // Массивы для меток внешности
-        vector<vector<bool>> ext4(R, vector<bool>(C, false)); // тип 1
-        vector<vector<bool>> ext8(R, vector<bool>(C, false)); // тип 2
+	while (!queue.empty())
+	{
+		auto [row, col] = queue.front();
+		queue.pop();
 
-        // Запускаем заливку по 4-связи для земных клеток
-        floodFill(grid, ext4, false);
-        // Запускаем заливку по 8-связи для земных клеток
-        floodFill(grid, ext8, true);
+		for (size_t d = 0; d < 8; d++)
+		{
+			int newRow = row + Directions::EightDirections[d][0];
+			int newCol = col + Directions::EightDirections[d][1];
 
-        bool foundDam1 = false;
-        // Перебираем кандидатов на дамбу единичной длины.
-        // Рассмотрим соседние пары водных клеток внутри исходного озера:
-        // клетки озера находятся с индексами [1, m] x [1, n] в grid.
-        // Горизонтальные соседи:
-        for (int i = 1; i <= m; i++){
-            for (int j = 1; j < n; j++){
-                if(grid[i][j]=='#' && grid[i][j+1]=='#'){
-                    // Для двух горизонтально соседних клеток их общая сторона – вертикальный отрезок.
-                    // Вершины отрезка: верхняя: (i-1, j) и нижняя: (i, j) (в координатах вершин расширенного поля)
-                    auto [hasT1_1, hasT2_1] = checkVertex(i-1, j, grid, ext4, ext8);
-                    auto [hasT1_2, hasT2_2] = checkVertex(i, j, grid, ext4, ext8);
-                    // Условие: оба конца должны иметь метку типа2, и хотя бы один из них – типа1.
-                    if(hasT2_1 && hasT2_2 && (hasT1_1 || hasT1_2)){
-                        foundDam1 = true;
-                        goto finish;
-                    }
-                }
-            }
-        }
-        // Вертикальные соседи:
-        for (int i = 1; i < m; i++){
-            for (int j = 1; j <= n; j++){
-                if(grid[i][j]=='#' && grid[i+1][j]=='#'){
-                    // Для вертикально соседних клеток общая сторона – горизонтальный отрезок.
-                    // Вершины отрезка: левая: (i, j-1) и правая: (i, j)
-                    auto [hasT1_1, hasT2_1] = checkVertex(i, j-1, grid, ext4, ext8);
-                    auto [hasT1_2, hasT2_2] = checkVertex(i, j, grid, ext4, ext8);
-                    if(hasT2_1 && hasT2_2 && (hasT1_1 || hasT1_2)){
-                        foundDam1 = true;
-                        goto finish;
-                    }
-                }
-            }
-        }
-finish:
-        ans[idx] = foundDam1 ? 1 : 2;
-    }
-    // Выводим k ответов через пробел в одной строке
-    for (int i = 0; i < k; i++){
-        cout << ans[i] << (i+1 < k ? " " : "\n");
-    }
-    return 0;
+			if (0 <= newRow && newRow < rows && 0 <= newCol && newCol < columns)
+			{
+				if (lake[newRow][newCol] == '.' && !mask[newRow][newCol])
+				{
+					mask[newRow][newCol] = true;
+					queue.emplace( newRow, newCol );
+				}
+			}
+		}
+	}
+
+	return mask;
+}
+
+size_t FindMinDamByMasks(const Lake& lake, const Mask& m4, const Mask& m8)
+{
+	return 2;
+}
+
+int main()
+{
+	size_t lakesCount;
+	std::cin >> lakesCount;
+	std::vector<size_t> results;
+
+	for (size_t i = 0; i < lakesCount; i++)
+	{
+		size_t rows, columns;
+		std::cin >> rows >> columns;
+		Lake l = InitLake(rows, columns);
+		rows += 2;
+		columns += 2;
+		Mask m4 = MaskLakeInFourDirections(l, rows, columns);
+		Mask m8 = MaskLakeInEightDirections(l, rows, columns);
+
+		size_t minDam = FindMinDamByMasks(l, m4, m8);
+		results.push_back(minDam);
+	}
+
+	for (const size_t d : results)
+	{
+		std::cout << d;
+	}
+
+	std::cout << std::endl;
 }
