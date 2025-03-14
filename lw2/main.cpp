@@ -57,100 +57,152 @@
 
 #include <iostream>
 #include <vector>
-
+#include <queue>
 using namespace std;
 
-const int dx4[] = {-1, 0, 1, 0};
-const int dy4[] = {0, 1, 0, -1};
-const int dx8[] = {-1, -1, 0, 1, 1, 1, 0, -1};
-const int dy8[] = {0, 1, 1, 1, 0, -1, -1, -1};
+typedef pair<int,int> pii;
 
-vector<string> grid;
-vector<vector<bool>> type1;  // 4-связная метка
-vector<vector<bool>> type2;  // 8-связная метка
-int m, n;
-
-// 4-связная заливка суши
-void flood4(int x, int y) {
-    if (x < 0 || x >= m || y < 0 || y >= n) return;
-    if (type1[x][y] || grid[x][y] == '#') return;
-
-    type1[x][y] = true;
-    for (int d = 0; d < 4; d++) {
-        flood4(x + dx4[d], y + dy4[d]);
-    }
-}
-
-// 8-связная заливка суши
-void flood8(int x, int y) {
-    if (x < 0 || x >= m || y < 0 || y >= n) return;
-    if (type2[x][y] || grid[x][y] == '#') return;
-
-    type2[x][y] = true;
-    for (int d = 0; d < 8; d++) {
-        flood8(x + dx8[d], y + dy8[d]);
-    }
-}
-
-int findMinDam() {
-    // Добавляем границу из суши
-    grid.insert(grid.begin(), string(n+2, '.'));
-    grid.push_back(string(n+2, '.'));
-    for (auto& row : grid) {
-        row = '.' + row + '.';
-    }
-    m += 2;
-    n += 2;
-
-    // Инициализация меток
-    type1.assign(m, vector(n, false));
-    type2.assign(m, vector(n, false));
-
-    // 4-связная заливка
-    flood4(0, 0);
-
-    // 8-связная заливка
-    flood8(0, 0);
-
-    // Проверка всех вертикальных границ
-    for (int i = 1; i < m-1; i++) {
-        for (int j = 1; j < n; j++) {
-            if (grid[i][j] == '#' && grid[i][j-1] == '#') {
-                bool c1 = (type2[i][j] && type1[i][j]) || (type2[i][j-1] && type1[i][j-1]);
-                bool c2 = type2[i][j] && type2[i][j-1];
-                if (c1 && c2) return 1;
+// Функция, выполняющая заливку (BFS) с 4-связью или 8-связью.
+// Если eight = true – используем 8 направлений, иначе 4 направления.
+void floodFill(const vector<vector<char>> &grid, vector<vector<bool>> &vis, bool eight) {
+    int R = grid.size(), C = grid[0].size();
+    queue<pii> q;
+    // Запускаем с клеток на границе расширенного прямоугольника
+    for (int i = 0; i < R; i++) {
+        for (int j = 0; j < C; j++) {
+            if ((i == 0 || j == 0 || i == R-1 || j == C-1) && grid[i][j] == '.' && !vis[i][j]) {
+                vis[i][j] = true;
+                q.push({i,j});
             }
         }
     }
-
-    // Проверка всех горизонтальных границ
-    for (int i = 1; i < n; i++) {
-        for (int j = 1; j < n-1; j++) {
-            if (grid[i][j] == '#' && grid[i-1][j] == '#') {
-                bool c1 = (type2[i][j] && type1[i][j]) || (type2[i-1][j] && type1[i-1][j]);
-                bool c2 = type2[i][j] && type2[i-1][j];
-                if (c1 && c2) return 1;
+    // Направления: для 4-связи
+    int d4[4][2] = { {1,0}, {-1,0}, {0,1}, {0,-1} };
+    // Если 8-связь – включаем диагонали
+    int d8[8][2] = { {1,0}, {-1,0}, {0,1}, {0,-1}, {1,1}, {1,-1}, {-1,1}, {-1,-1} };
+    
+    while(!q.empty()){
+        auto [r, c] = q.front();
+        q.pop();
+        if(eight){
+            for (int k = 0; k < 8; k++){
+                int nr = r + d8[k][0], nc = c + d8[k][1];
+                if(nr >= 0 && nr < R && nc >= 0 && nc < C)
+                    if(grid[nr][nc]=='.' && !vis[nr][nc]){
+                        vis[nr][nc] = true;
+                        q.push({nr,nc});
+                    }
+            }
+        } else {
+            for (int k = 0; k < 4; k++){
+                int nr = r + d4[k][0], nc = c + d4[k][1];
+                if(nr >= 0 && nr < R && nc >= 0 && nc < C)
+                    if(grid[nr][nc]=='.' && !vis[nr][nc]){
+                        vis[nr][nc] = true;
+                        q.push({nr,nc});
+                    }
             }
         }
     }
-
-    return 2;
 }
 
-int main() {
+// Для данной вершины (координаты в пространстве вершин расширенного поля)
+// функция проверяет: существует ли хотя бы один соседний квадрат (из 4, сдвигами (-1,-1), (-1,0), (0,-1), (0,0)),
+// который является землёй ('.') и имеет метку внешности по 4-связи (t1) или по 8-связи (t2).
+// Обратите внимание: grid, t1, t2 имеют размер (m+2) x (n+2) – клетки расширенного прямоугольника.
+pair<bool,bool> checkVertex(int r, int c, const vector<vector<char>> &grid,
+                              const vector<vector<bool>> &t1,
+                              const vector<vector<bool>> &t2) {
+    bool hasT1 = false, hasT2 = false;
+    int R = grid.size(), C = grid[0].size();
+    // Рассмотрим квадраты, соседние с вершиной (r, c):
+    // возможные координаты верхнего левого угла: (r-1, c-1), (r-1, c), (r, c-1), (r, c)
+    for (int dr = -1; dr <= 0; dr++){
+        for (int dc = -1; dc <= 0; dc++){
+            int nr = r + dr, nc = c + dc;
+            if(nr >= 0 && nr < R && nc >= 0 && nc < C){
+                if(grid[nr][nc] == '.') {
+                    if(t1[nr][nc]) hasT1 = true;
+                    if(t2[nr][nc]) hasT2 = true;
+                }
+            }
+        }
+    }
+    return {hasT1, hasT2};
+}
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
     int k;
     cin >> k;
-    while (k--) {
+    // Будем сохранять ответы для всех озер
+    vector<int> ans(k, 2);
+    for (int idx = 0; idx < k; idx++){
+        int m, n;
         cin >> m >> n;
-        grid.resize(m);
-        for (size_t i = 0; i < m; i++)
-        {
-        	grid[i].resize(n);
-        	cin >> grid[i];
+        // Создаем расширенное поле размером (m+2) x (n+2)
+        vector<vector<char>> grid(m+2, vector<char>(n+2, '.'));
+        // Заполняем внутреннюю часть входными данными
+        for (int i = 1; i <= m; i++){
+            string line;
+            cin >> line;
+            for (int j = 1; j <= n; j++){
+                grid[i][j] = line[j-1];
+            }
         }
+        int R = m+2, C = n+2;
+        // Массивы для меток внешности
+        vector<vector<bool>> ext4(R, vector<bool>(C, false)); // тип 1
+        vector<vector<bool>> ext8(R, vector<bool>(C, false)); // тип 2
 
+        // Запускаем заливку по 4-связи для земных клеток
+        floodFill(grid, ext4, false);
+        // Запускаем заливку по 8-связи для земных клеток
+        floodFill(grid, ext8, true);
 
-        cout << findMinDam() << " ";
+        bool foundDam1 = false;
+        // Перебираем кандидатов на дамбу единичной длины.
+        // Рассмотрим соседние пары водных клеток внутри исходного озера:
+        // клетки озера находятся с индексами [1, m] x [1, n] в grid.
+        // Горизонтальные соседи:
+        for (int i = 1; i <= m; i++){
+            for (int j = 1; j < n; j++){
+                if(grid[i][j]=='#' && grid[i][j+1]=='#'){
+                    // Для двух горизонтально соседних клеток их общая сторона – вертикальный отрезок.
+                    // Вершины отрезка: верхняя: (i-1, j) и нижняя: (i, j) (в координатах вершин расширенного поля)
+                    auto [hasT1_1, hasT2_1] = checkVertex(i-1, j, grid, ext4, ext8);
+                    auto [hasT1_2, hasT2_2] = checkVertex(i, j, grid, ext4, ext8);
+                    // Условие: оба конца должны иметь метку типа2, и хотя бы один из них – типа1.
+                    if(hasT2_1 && hasT2_2 && (hasT1_1 || hasT1_2)){
+                        foundDam1 = true;
+                        goto finish;
+                    }
+                }
+            }
+        }
+        // Вертикальные соседи:
+        for (int i = 1; i < m; i++){
+            for (int j = 1; j <= n; j++){
+                if(grid[i][j]=='#' && grid[i+1][j]=='#'){
+                    // Для вертикально соседних клеток общая сторона – горизонтальный отрезок.
+                    // Вершины отрезка: левая: (i, j-1) и правая: (i, j)
+                    auto [hasT1_1, hasT2_1] = checkVertex(i, j-1, grid, ext4, ext8);
+                    auto [hasT1_2, hasT2_2] = checkVertex(i, j, grid, ext4, ext8);
+                    if(hasT2_1 && hasT2_2 && (hasT1_1 || hasT1_2)){
+                        foundDam1 = true;
+                        goto finish;
+                    }
+                }
+            }
+        }
+finish:
+        ans[idx] = foundDam1 ? 1 : 2;
+    }
+    // Выводим k ответов через пробел в одной строке
+    for (int i = 0; i < k; i++){
+        cout << ans[i] << (i+1 < k ? " " : "\n");
     }
     return 0;
 }
