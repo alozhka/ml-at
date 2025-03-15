@@ -1,9 +1,10 @@
 PROGRAM=$1
+OUTPUT="/tmp/output.txt"
 
-OUTPUT=$($PROGRAM < input/in.txt)
+$PROGRAM test1/in.txt $OUTPUT
 
-if [ "$OUTPUT" != "2 1" ]; then
-  echo "Test 1 failed. Got $OUTPUT"
+if ! cmp test1/out.txt $OUTPUT; then
+  echo "Test 1 failed"
   exit 1
 fi
 

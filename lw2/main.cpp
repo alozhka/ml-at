@@ -55,6 +55,7 @@
 
  */
 
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -71,7 +72,7 @@ constexpr std::array<std::array<int, 2>, 8> EightDirections = {
 };
 } // namespace Directions
 
-Lake InitLake(const size_t rows, const size_t columns)
+Lake InitLake(std::istream& in, const size_t rows, const size_t columns)
 {
 	Lake l;
 
@@ -80,7 +81,7 @@ Lake InitLake(const size_t rows, const size_t columns)
 	for (size_t i = 0; i < rows; i++)
 	{
 		std::string row;
-		std::cin >> row;
+		in >> row;
 		l.push_back('.' + row.substr(0, columns) + '.');
 	}
 
@@ -142,7 +143,7 @@ Mask MaskLakeInEightDirections(const Lake& lake, const size_t rows, const size_t
 				if (lake[newRow][newCol] == '.' && !mask[newRow][newCol])
 				{
 					mask[newRow][newCol] = true;
-					queue.emplace( newRow, newCol );
+					queue.emplace(newRow, newCol);
 				}
 			}
 		}
@@ -153,20 +154,75 @@ Mask MaskLakeInEightDirections(const Lake& lake, const size_t rows, const size_t
 
 size_t FindMinDamByMasks(const Lake& lake, const Mask& m4, const Mask& m8)
 {
+	for (size_t row = 0; row < m4.size() - 1; row++)
+	{
+		for (size_t col = 0; col < m4.size(); col++)
+		{
+			if (lake[row][col] == '#' && lake[row][col + 1] == '#')
+			{
+				if (m4[row - 1][col] && m8[row + 1][col] || m8[row - 1][col] && m4[row + 1][col])
+				{
+					return 1;
+				}
+				if (m4[row - 1][col] && m8[row + 1][col + 1] || m8[row - 1][col] && m4[row + 1][col + 1])
+				{
+					return 1;
+				}
+				if (m4[row - 1][col + 1] && m8[row + 1][col + 1] || m8[row - 1][col + 1] && m4[row + 1][col + 1])
+				{
+					return 1;
+				}
+				if (m4[row - 1][col + 1] && m8[row + 1][col] || m8[row - 1][col + 1] && m4[row + 1][col])
+				{
+					return 1;
+				}
+			}
+		}
+	}
+
+	for (size_t row = 0; row < m4.size(); row++)
+	{
+		for (size_t col = 0; col < m4.size() - 1; col++)
+		{
+			if (lake[row][col] == '#' && lake[row + 1][col] == '#')
+			{
+				if (m4[row][col - 1] && m8[row][col + 1] || m8[row][col - 1] && m4[row][col + 1])
+				{
+					return 1;
+				}
+				if (m4[row][col - 1] && m8[row + 1][col + 1] || m8[row][col - 1] && m4[row + 1][col + 1])
+				{
+					return 1;
+				}
+				if (m4[row + 1][col - 1] && m8[row + 1][col + 1] || m8[row + 1][col - 1] && m4[row + 1][col + 1])
+				{
+					return 1;
+				}
+				if (m4[row + 1][col - 1] && m8[row][col + 1] || m8[row + 1][col - 1] && m4[row][col + 1])
+				{
+					return 1;
+				}
+			}
+		}
+	}
+
 	return 2;
 }
 
-int main()
+int main(const int _, const char* argv[])
 {
+	std::ifstream in(argv[1]);
+	std::ofstream out(argv[2]);
+
 	size_t lakesCount;
-	std::cin >> lakesCount;
+	in >> lakesCount;
 	std::vector<size_t> results;
 
 	for (size_t i = 0; i < lakesCount; i++)
 	{
 		size_t rows, columns;
-		std::cin >> rows >> columns;
-		Lake l = InitLake(rows, columns);
+		in >> rows >> columns;
+		Lake l = InitLake(in, rows, columns);
 		rows += 2;
 		columns += 2;
 		Mask m4 = MaskLakeInFourDirections(l, rows, columns);
@@ -178,8 +234,8 @@ int main()
 
 	for (const size_t d : results)
 	{
-		std::cout << d;
+		out << d << ' ';
 	}
 
-	std::cout << std::endl;
+	out << std::endl;
 }
