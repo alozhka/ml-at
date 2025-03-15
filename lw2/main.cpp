@@ -154,51 +154,29 @@ Mask MaskLakeInEightDirections(const Lake& lake, const size_t rows, const size_t
 
 size_t FindMinDamByMasks(const Lake& lake, const Mask& m4, const Mask& m8)
 {
-	for (size_t row = 0; row < m4.size() - 1; row++)
+	for (size_t row = 0; row < m4.size(); row++)
 	{
 		for (size_t col = 0; col < m4.size(); col++)
 		{
 			if (lake[row][col] == '#' && lake[row][col + 1] == '#')
 			{
-				if (m4[row - 1][col] && m8[row + 1][col] || m8[row - 1][col] && m4[row + 1][col])
-				{
-					return 1;
-				}
-				if (m4[row - 1][col] && m8[row + 1][col + 1] || m8[row - 1][col] && m4[row + 1][col + 1])
-				{
-					return 1;
-				}
-				if (m4[row - 1][col + 1] && m8[row + 1][col + 1] || m8[row - 1][col + 1] && m4[row + 1][col + 1])
-				{
-					return 1;
-				}
-				if (m4[row - 1][col + 1] && m8[row + 1][col] || m8[row - 1][col + 1] && m4[row + 1][col])
+				if ((m4[row - 1][col]		&& m8[row + 1][col]		|| m8[row - 1][col]		&& m4[row + 1][col])		||
+					(m4[row - 1][col]		&& m8[row + 1][col + 1] || m8[row - 1][col]		&& m4[row + 1][col + 1])	||
+					(m4[row - 1][col + 1]	&& m8[row + 1][col + 1] || m8[row - 1][col + 1] && m4[row + 1][col + 1])	||
+					(m4[row - 1][col + 1]	&& m8[row + 1][col]		|| m8[row - 1][col + 1] && m4[row + 1][col])
+				)
 				{
 					return 1;
 				}
 			}
-		}
-	}
 
-	for (size_t row = 0; row < m4.size(); row++)
-	{
-		for (size_t col = 0; col < m4.size() - 1; col++)
-		{
 			if (lake[row][col] == '#' && lake[row + 1][col] == '#')
 			{
-				if (m4[row][col - 1] && m8[row][col + 1] || m8[row][col - 1] && m4[row][col + 1])
-				{
-					return 1;
-				}
-				if (m4[row][col - 1] && m8[row + 1][col + 1] || m8[row][col - 1] && m4[row + 1][col + 1])
-				{
-					return 1;
-				}
-				if (m4[row + 1][col - 1] && m8[row + 1][col + 1] || m8[row + 1][col - 1] && m4[row + 1][col + 1])
-				{
-					return 1;
-				}
-				if (m4[row + 1][col - 1] && m8[row][col + 1] || m8[row + 1][col - 1] && m4[row][col + 1])
+				if ((m4[row][col - 1]		&& m8[row][col + 1]		|| m8[row][col - 1]		&& m4[row][col + 1])		||
+					(m4[row][col - 1]		&& m8[row + 1][col + 1] || m8[row][col - 1]		&& m4[row + 1][col + 1])	||
+					(m4[row + 1][col - 1]	&& m8[row + 1][col + 1] || m8[row + 1][col - 1] && m4[row + 1][col + 1])	||
+					(m4[row + 1][col - 1]	&& m8[row][col + 1]		|| m8[row + 1][col - 1] && m4[row][col + 1])
+				)
 				{
 					return 1;
 				}
