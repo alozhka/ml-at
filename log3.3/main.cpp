@@ -28,59 +28,50 @@
  */
 
 #include <fstream>
-#include <iostream>
-#include <span>
+#include <limits>
+#include <vector>
 
-std::vector<size_t> ParseCuts(const std::string& filename)
+size_t CutCost(const size_t L, const std::vector<size_t>& cut_positions)
 {
-	std::ifstream in(filename);
-	size_t l, n;
+	const size_t cutsAmount = cut_positions.size();
+	std::vector<size_t> cuts = { 0 };
+	cuts.insert(cuts.end(), cut_positions.begin(), cut_positions.end());
+	cuts.push_back(L);
 
-	in >> l >> n;
-	std::vector<size_t> cuts(n + 2);
-	cuts[0] = 0;
+	std::vector cutCost(cutsAmount + 2, std::vector<size_t>(cutsAmount + 2, 0));
 
-	for (size_t i = 1; i <= n; i++)
+	for (size_t length = 2; length <= cutsAmount + 1; length++)
 	{
-		in >> cuts[i];
-	}
-
-	cuts[n + 1] = l;
-
-	return cuts;
-}
-
-size_t CutTimber(const std::span<size_t>& cuts)
-{
-	const size_t lastCutIndex = cuts.size() - 1;
-	if (lastCutIndex == 1)
-	{
-		return 0;
-	}
-
-	const size_t length = cuts[lastCutIndex] - cuts[0];
-	size_t min = std::numeric_limits<size_t>::max();
-	for (int i = 1; i < lastCutIndex; i++)
-	{
-		const size_t l = CutTimber(cuts.first(i + 1));
-		const size_t r = CutTimber(cuts.last(lastCutIndex - i + 1));
-		const size_t cost = l + r;
-
-		if (min > cost)
+		for (size_t i = 0; i + length <= cutsAmount + 1; i++)
 		{
-			min = cost;
+			const size_t j = i + length;
+			cutCost[i][j] = std::numeric_limits<size_t>::max();
+
+			for (size_t k = i + 1; k < j; ++k)
+			{
+				const size_t totalCost = cutCost[i][k] + cutCost[k][j] + cuts[j] - cuts[i];
+				cutCost[i][j] = std::min(cutCost[i][j], totalCost);
+			}
 		}
 	}
 
-	return length + min;
+	return cutCost[0][cutsAmount + 1];
 }
 
-int main(const int _, const char* argv[])
+int main(int _, char* argv[])
 {
+	std::ifstream in(argv[1]);
 	std::ofstream out(argv[2]);
-	std::vector<size_t> cuts = ParseCuts(argv[1]);
 
-	const size_t sum = CutTimber(cuts);
-	out << sum << std::endl;
+	size_t L, N;
+	in >> L >> N;
+
+	std::vector<size_t> cuts(N);
+	for (size_t& cut : cuts)
+	{
+		in >> cut;
+	}
+
+	out << CutCost(L, cuts) << std::endl;
 	return 0;
 }
