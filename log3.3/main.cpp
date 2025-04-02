@@ -47,7 +47,7 @@ size_t CutCost(const size_t L, const std::vector<size_t>& cut_positions)
 			const size_t j = i + length;
 			cutCost[i][j] = std::numeric_limits<size_t>::max();
 
-			for (size_t k = i + 1; k < j; ++k)
+			for (size_t k = i + 1; k < j; k++)
 			{
 				const size_t totalCost = cutCost[i][k] + cutCost[k][j] + cuts[j] - cuts[i];
 				cutCost[i][j] = std::min(cutCost[i][j], totalCost);
