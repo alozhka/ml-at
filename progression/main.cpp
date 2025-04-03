@@ -31,77 +31,86 @@
 
 using namespace std;
 
-int main(const int _, const char* argv[])
-{
-	std::ifstream fin(argv[1]);
-	std::ofstream fout(argv[2]);
-	int N, M;
-	fin >> N >> M;
+// Функция проверки, содержит ли подмассив длины len прогрессию из m членов с разностью 13
+bool hasProgression(vector<int>& arr, int len, int m, vector<int>& prog) {
+    for (int i = 0; i <= len - m; i++) {
+        bool found = true;
+        // Проверяем все возможные начала прогрессии
+        for (int j = i + 1; j < len; j++) {
+            int count = 2;
+            int diff = arr[j] - arr[i];
+            if (diff != 13) continue;
 
-	vector<int> arr(N);
-	for (int i = 0; i < N; i++)
-	{
-		fin >> arr[i];
-	}
+            int last = arr[j];
+            for (int k = j + 1; k < len && count < m; k++) {
+                if (arr[k] - last == 13) {
+                    count++;
+                    last = arr[k];
+                }
+            }
 
-	int K = 0;
-	vector<int> progression;
+            if (count == m) {
+                // Сохраняем найденную прогрессию
+                prog.clear();
+                prog.push_back(arr[i]);
+                last = arr[i];
+                for (int k = i + 1; k < len && prog.size() < m; k++) {
+                    if (arr[k] - last == 13) {
+                        prog.push_back(arr[k]);
+                        last = arr[k];
+                    }
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
-	for (int len = 1; len <= N; len++)
-	{
-		bool found = false;
-		for (int start = 0; start <= len - M; start++)
-		{
-			bool isProgression = true;
-			for (int j = start + 1; j < start + M; j++)
-			{
-				if (arr[j] - arr[j - 1] != 13)
-				{
-					isProgression = false;
-					break;
-				}
-			}
-			if (isProgression)
-			{
-				found = true;
-				if (progression.empty())
-				{
-					// Сохраняем первую найденную прогрессию
-					for (int j = start; j < start + M; j++)
-					{
-						progression.push_back(arr[j]);
-					}
-				}
-				break;
-			}
-		}
-		if (!found)
-		{
-			K = len;
-		}
-		else
-		{
-			break;
-		}
-	}
+int main(const int _, const char* argv[]) {
+    ifstream fin(argv[1]);
+    ofstream fout(argv[2]);
 
-	// Выводим результат
-	fout << K << endl;
-	if (progression.empty())
-	{
-		fout << "No";
-	}
-	else
-	{
-		for (int i = 0; i < progression.size(); i++)
-		{
-			fout << progression[i];
-			if (i < progression.size() - 1)
-				fout << " ";
-		}
-	}
+    int n, m;
+    fin >> n >> m;
 
-	fin.close();
-	fout.close();
-	return 0;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        fin >> arr[i];
+    }
+
+    fin.close();
+
+    int k = 0;
+    vector<int> progression;
+
+    // Бинарный поиск по длине префикса
+    int left = 0, right = n;
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        if (!hasProgression(arr, mid, m, progression)) {
+            k = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    fout << k << endl;
+
+    // Ищем первую прогрессию в минимальном префиксе, где она появляется
+    if (k < n) {
+        hasProgression(arr, k + 1, m, progression);
+        for (int i = 0; i < progression.size(); i++) {
+            fout << progression[i];
+            if (i < progression.size() - 1) fout << " ";
+        }
+    } else {
+        fout << "No";
+    }
+
+    fout << endl;
+    fout.close();
+
+    return 0;
 }
