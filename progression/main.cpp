@@ -31,7 +31,6 @@
 #include <fstream>
 #include <vector>
 
-
 struct Args
 {
 	int maxAmount = 0, progAmount = 0;
@@ -39,51 +38,6 @@ struct Args
 };
 
 using namespace std;
-
-// Функция проверки, содержит ли подмассив длины len прогрессию из m членов с разностью 13
-bool hasProgression(vector<int>& arr, int len, int m, vector<int>& prog)
-{
-	for (int i = 0; i <= len - m; i++)
-	{
-		bool found = true;
-		// Проверяем все возможные начала прогрессии
-		for (int j = i + 1; j < len; j++)
-		{
-			int count = 2;
-			int diff = arr[j] - arr[i];
-			if (diff != 13)
-				continue;
-
-			int last = arr[j];
-			for (int k = j + 1; k < len && count < m; k++)
-			{
-				if (arr[k] - last == 13)
-				{
-					count++;
-					last = arr[k];
-				}
-			}
-
-			if (count == m)
-			{
-				// Сохраняем найденную прогрессию
-				prog.clear();
-				prog.push_back(arr[i]);
-				last = arr[i];
-				for (int k = i + 1; k < len && prog.size() < m; k++)
-				{
-					if (arr[k] - last == 13)
-					{
-						prog.push_back(arr[k]);
-						last = arr[k];
-					}
-				}
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 void ParseArgs(Args& args, std::string_view filename)
 {
@@ -106,45 +60,52 @@ int main(const int _, const char* argv[])
 	ofstream fout(argv[2]);
 	ParseArgs(args, argv[1]);
 
-	int k = 0;
-	vector<int> progression;
+	int N = args.maxAmount;
+	int M = args.progAmount;
+	const std::vector<int> expenses = args.sequence;
 
-	// Бинарный поиск по длине префикса
-	int left = 0, right = args.maxAmount;
-	while (left <= right)
+	vector<unordered_map<int, pair<int, int>>> dp(N);
+	int K = N;
+	vector<int> bad_progression;
+
+	for (int i = 0; i < N; i++)
 	{
-		int mid = (left + right) / 2;
-		if (!hasProgression(args.sequence, mid, args.progAmount, progression))
+		for (int j = 0; j < i; j++)
 		{
-			k = mid;
-			left = mid + 1;
-		}
-		else
-		{
-			right = mid - 1;
+			int diff = expenses[i] - expenses[j];
+			if (diff == 13) {
+				dp[i][diff] = {dp[j][diff].first + 1, j};
+				if (dp[i][diff].first >= M - 1 && i < K) {
+					K = i;
+					bad_progression.clear();
+					int idx = i;
+					vector<int> temp_progression;
+					for (int k = 0; k < M; k++) {
+						temp_progression.push_back(expenses[idx]);
+						idx = dp[idx][diff].second;
+					}
+					reverse(temp_progression.begin(), temp_progression.end());
+					if (bad_progression.empty() || temp_progression < bad_progression) {
+						bad_progression = temp_progression;
+					}
+				}
+			}
 		}
 	}
 
-	fout << k << endl;
-
-	// Ищем первую прогрессию в минимальном префиксе, где она появляется
-	if (k < args.maxAmount)
+	fout << K << "\n";
+	if (bad_progression.empty())
 	{
-		hasProgression(args.sequence, k + 1, args.progAmount, progression);
-		for (int i = 0; i < progression.size(); i++)
-		{
-			fout << progression[i];
-			if (i < progression.size() - 1)
-				fout << " ";
-		}
+		fout << "No\n";
 	}
 	else
 	{
-		fout << "No";
+		for (int num : bad_progression)
+		{
+			fout << num << " ";
+		}
+		fout << "\n";
 	}
-
-	fout << endl;
-	fout.close();
 
 	return 0;
 }
