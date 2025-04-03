@@ -13,7 +13,9 @@
 а M – недопустимое число членов прогрессии. Вторая строка содержит список расходов в виде целых положительных чисел.
 Ограничения: 2 ≤ N, M ≤ 5000, 1 ≤ Xi ≤ 65000, время 1 с.
 
-Вывод в файл OUTPUT.TXT. В первой строке выводится единственное число K- максимальное количество начальных чисел списка, не содержащих в качестве подсписка M последовательных членов несчастливой арифметической прогрессии. Во второй строке выводятся через пробел члены первой обнаруженной несчастливой прогрессии. Если ее не обнаружено, вывести No.
+Вывод в файл OUTPUT.TXT. В первой строке выводится единственное число K- максимальное количество начальных чисел списка,
+не содержащих в качестве подсписка M последовательных членов несчастливой арифметической прогрессии.
+Во второй строке выводятся через пробел члены первой обнаруженной несчастливой прогрессии. Если ее не обнаружено, вывести No.
 
 Пример
 Ввод
@@ -29,88 +31,120 @@
 #include <fstream>
 #include <vector>
 
+
+struct Args
+{
+	int maxAmount = 0, progAmount = 0;
+	std::vector<int> sequence = {};
+};
+
 using namespace std;
 
 // Функция проверки, содержит ли подмассив длины len прогрессию из m членов с разностью 13
-bool hasProgression(vector<int>& arr, int len, int m, vector<int>& prog) {
-    for (int i = 0; i <= len - m; i++) {
-        bool found = true;
-        // Проверяем все возможные начала прогрессии
-        for (int j = i + 1; j < len; j++) {
-            int count = 2;
-            int diff = arr[j] - arr[i];
-            if (diff != 13) continue;
+bool hasProgression(vector<int>& arr, int len, int m, vector<int>& prog)
+{
+	for (int i = 0; i <= len - m; i++)
+	{
+		bool found = true;
+		// Проверяем все возможные начала прогрессии
+		for (int j = i + 1; j < len; j++)
+		{
+			int count = 2;
+			int diff = arr[j] - arr[i];
+			if (diff != 13)
+				continue;
 
-            int last = arr[j];
-            for (int k = j + 1; k < len && count < m; k++) {
-                if (arr[k] - last == 13) {
-                    count++;
-                    last = arr[k];
-                }
-            }
+			int last = arr[j];
+			for (int k = j + 1; k < len && count < m; k++)
+			{
+				if (arr[k] - last == 13)
+				{
+					count++;
+					last = arr[k];
+				}
+			}
 
-            if (count == m) {
-                // Сохраняем найденную прогрессию
-                prog.clear();
-                prog.push_back(arr[i]);
-                last = arr[i];
-                for (int k = i + 1; k < len && prog.size() < m; k++) {
-                    if (arr[k] - last == 13) {
-                        prog.push_back(arr[k]);
-                        last = arr[k];
-                    }
-                }
-                return true;
-            }
-        }
-    }
-    return false;
+			if (count == m)
+			{
+				// Сохраняем найденную прогрессию
+				prog.clear();
+				prog.push_back(arr[i]);
+				last = arr[i];
+				for (int k = i + 1; k < len && prog.size() < m; k++)
+				{
+					if (arr[k] - last == 13)
+					{
+						prog.push_back(arr[k]);
+						last = arr[k];
+					}
+				}
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
-int main(const int _, const char* argv[]) {
-    ifstream fin(argv[1]);
-    ofstream fout(argv[2]);
+void ParseArgs(Args& args, std::string_view filename)
+{
+	ifstream fin(filename);
 
-    int n, m;
-    fin >> n >> m;
+	fin >> args.maxAmount >> args.progAmount;
 
-    vector<int> arr(n);
-    for (int i = 0; i < n; i++) {
-        fin >> arr[i];
-    }
+	vector<int> arr(args.maxAmount);
+	for (int i = 0; i < args.maxAmount; i++)
+	{
+		fin >> arr[i];
+	}
 
-    fin.close();
+	args.sequence = arr;
+}
 
-    int k = 0;
-    vector<int> progression;
+int main(const int _, const char* argv[])
+{
+	Args args;
+	ofstream fout(argv[2]);
+	ParseArgs(args, argv[1]);
 
-    // Бинарный поиск по длине префикса
-    int left = 0, right = n;
-    while (left <= right) {
-        int mid = (left + right) / 2;
-        if (!hasProgression(arr, mid, m, progression)) {
-            k = mid;
-            left = mid + 1;
-        } else {
-            right = mid - 1;
-        }
-    }
+	int k = 0;
+	vector<int> progression;
 
-    fout << k << endl;
+	// Бинарный поиск по длине префикса
+	int left = 0, right = args.maxAmount;
+	while (left <= right)
+	{
+		int mid = (left + right) / 2;
+		if (!hasProgression(args.sequence, mid, args.progAmount, progression))
+		{
+			k = mid;
+			left = mid + 1;
+		}
+		else
+		{
+			right = mid - 1;
+		}
+	}
 
-    // Ищем первую прогрессию в минимальном префиксе, где она появляется
-    if (k < n) {
-        hasProgression(arr, k + 1, m, progression);
-        for (int i = 0; i < progression.size(); i++) {
-            fout << progression[i];
-            if (i < progression.size() - 1) fout << " ";
-        }
-    } else {
-        fout << "No";
-    }
+	fout << k << endl;
 
-    fout << endl;
-    fout.close();
+	// Ищем первую прогрессию в минимальном префиксе, где она появляется
+	if (k < args.maxAmount)
+	{
+		hasProgression(args.sequence, k + 1, args.progAmount, progression);
+		for (int i = 0; i < progression.size(); i++)
+		{
+			fout << progression[i];
+			if (i < progression.size() - 1)
+				fout << " ";
+		}
+	}
+	else
+	{
+		fout << "No";
+	}
 
-    return 0;
+	fout << endl;
+	fout.close();
+
+	return 0;
 }
