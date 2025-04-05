@@ -37,15 +37,19 @@ struct Args
 	std::vector<int> sequence = {};
 };
 
-using namespace std;
+struct Progression
+{
+	int maxK = 0;
+	std::vector<int> progression = {};
+};
 
 void ParseArgs(Args& args, std::string_view filename)
 {
-	ifstream fin(filename);
+	std::ifstream fin(filename);
 
 	fin >> args.maxAmount >> args.progAmount;
 
-	vector<int> arr(args.maxAmount);
+	std::vector<int> arr(args.maxAmount);
 	for (int i = 0; i < args.maxAmount; i++)
 	{
 		fin >> arr[i];
@@ -54,58 +58,85 @@ void ParseArgs(Args& args, std::string_view filename)
 	args.sequence = arr;
 }
 
-int main(const int _, const char* argv[])
+Progression FindSafePrefix(const std::vector<int>& arr, const int n, const int m)
 {
-	Args args;
-	ofstream fout(argv[2]);
-	ParseArgs(args, argv[1]);
+	std::vector dp(n, 1);
+	std::vector prev(n, -1);
 
-	int N = args.maxAmount;
-	int M = args.progAmount;
-	const std::vector<int> expenses = args.sequence;
+	int maxK = 0;
+	std::vector<int> progression;
+	bool found = false;
 
-	vector<unordered_map<int, pair<int, int>>> dp(N);
-	int K = N;
-	vector<int> bad_progression;
-
-	for (int i = 0; i < N; i++)
+	for (int i = 0; i < n; i++)
 	{
-		for (int j = 0; j < i; j++)
+		if (!found)
 		{
-			int diff = expenses[i] - expenses[j];
-			if (diff == 13) {
-				dp[i][diff] = {dp[j][diff].first + 1, j};
-				if (dp[i][diff].first >= M - 1 && i < K) {
-					K = i;
-					bad_progression.clear();
-					int idx = i;
-					vector<int> temp_progression;
-					for (int k = 0; k < M; k++) {
-						temp_progression.push_back(expenses[idx]);
-						idx = dp[idx][diff].second;
-					}
-					reverse(temp_progression.begin(), temp_progression.end());
-					if (bad_progression.empty() || temp_progression < bad_progression) {
-						bad_progression = temp_progression;
+			for (int j = 0; j < i; j++)
+			{
+				if (arr[i] - arr[j] == 13)
+				{
+					const int newLen = dp[j] + 1;
+					if (newLen > dp[i])
+					{
+						dp[i] = newLen;
+						prev[i] = j;
+
+						if (newLen == m)
+						{
+							int curr = i;
+							while (curr != -1 && progression.size() < m)
+							{
+								progression.push_back(arr[curr]);
+								curr = prev[curr];
+							}
+							std::ranges::reverse(progression);
+							maxK = i;
+							found = true;
+							break;
+						}
 					}
 				}
+			}
+			if (!found && dp[i] < m)
+			{
+				maxK = i + 1;
 			}
 		}
 	}
 
-	fout << K << "\n";
-	if (bad_progression.empty())
+	return { maxK, progression };
+}
+
+void PrintProgression(const std::string& filename, const Progression& result)
+{
+	std::ofstream out(filename);
+
+	out << result.maxK << std::endl;
+
+	if (result.progression.empty())
 	{
-		fout << "No\n";
+		out << "No" << std::endl;
 	}
 	else
 	{
-		for (int num : bad_progression)
+		for (int i = 0; i < result.progression.size(); i++)
 		{
-			fout << num << " ";
+			out << result.progression[i];
+			if (i < result.progression.size() - 1)
+				out << " ";
 		}
-		fout << "\n";
+		out << std::endl;
 	}
+}
+
+int main(const int _, const char* argv[])
+{
+	Args args;
+	ParseArgs(args, argv[1]);
+
+	const Progression result = FindSafePrefix(args.sequence, args.maxAmount, args.progAmount);
+
+	PrintProgression(argv[2], result);
 
 	return 0;
 }
