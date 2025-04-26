@@ -13,30 +13,23 @@
 12        5         0
 */
 #include <fstream>
-#include <iostream>
 #include <string>
-#include <vector>
 
 using ull = unsigned long long;
 
-// Считываем данные
-void readInput(std::string_view filename, int& N, std::string& ticket)
+void ReadTicket(std::string_view filename, int& N, std::string& ticket)
 {
-	std::ifstream fin(filename.data());
-	fin >> N >> ticket;
-	fin.close();
+	std::ifstream in(filename.data());
+	in >> N >> ticket;
 }
 
-// Записываем данные
-void writeOutput(std::string_view filename, ull answer)
+void PrintAnswer(std::string_view filename, ull answer)
 {
-	std::ofstream fout(filename.data());
-	fout << answer << "\n";
-	fout.close();
+	std::ofstream out(filename.data());
+	out << answer << std::endl;
 }
 
-// Проверяем, счастливый ли билет
-bool isLucky(const std::string& ticket, int N)
+bool IsLucky(const std::string& ticket, int N)
 {
 	int left_sum = 0, right_sum = 0;
 	for (int i = 0; i < N; i++)
@@ -50,7 +43,6 @@ bool isLucky(const std::string& ticket, int N)
 	return left_sum == right_sum;
 }
 
-// Преобразуем число в строку длины 2N с ведущими нулями
 std::string numberToTicket(ull number, int totalLength)
 {
 	std::string result(totalLength, '0');
@@ -62,7 +54,7 @@ std::string numberToTicket(ull number, int totalLength)
 	return result;
 }
 
-ull solve(int N, const std::string& startTicket)
+ull FindMinLengthToTicket(int N, const std::string& startTicket)
 {
 	ull current = 0;
 	for (char c : startTicket)
@@ -73,15 +65,13 @@ ull solve(int N, const std::string& startTicket)
 	int totalLength = 2 * N;
 	ull steps = 0;
 
-	while (true)
+	for (; true; current++, steps++)
 	{
 		std::string ticket = numberToTicket(current, totalLength);
-		if (isLucky(ticket, N))
+		if (IsLucky(ticket, N))
 		{
 			break;
 		}
-		++current;
-		++steps;
 	}
 
 	return steps;
@@ -91,8 +81,8 @@ int main(const int _, const char* argv[])
 {
 	int N;
 	std::string ticket;
-	readInput(argv[1], N, ticket);
-	ull answer = solve(N, ticket);
-	writeOutput(argv[2], answer);
+	ReadTicket(argv[1], N, ticket);
+	const ull answer = FindMinLengthToTicket(N, ticket);
+	PrintAnswer(argv[2], answer);
 	return 0;
 }
