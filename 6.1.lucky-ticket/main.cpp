@@ -23,12 +23,12 @@
 Вывод 1   Вывод 2   Вывод 3
 12        5         0
 */
+#include <boost/multiprecision/cpp_int.hpp>
 #include <fstream>
-#include <span>
 #include <string>
-#include <vector>
 
 using ull = unsigned long long;
+using namespace boost::multiprecision;
 
 void readInput(std::string_view filename, int& N, std::string& ticket)
 {
@@ -37,71 +37,54 @@ void readInput(std::string_view filename, int& N, std::string& ticket)
 	fin.close();
 }
 
-void writeOutput(std::string_view filename, ull steps)
+void writeOutput(std::string_view filename, const std::string& steps)
 {
 	std::ofstream fout(filename.data());
 	fout << steps << "\n";
 	fout.close();
 }
 
-// Увеличиваем номер билета на 1
-void incrementTicket(std::vector<short>& digits)
+ull CalculateSum(const cpp_int& num)
 {
-	int n = digits.size();
-	int carry = 1;
-	for (int i = n - 1; i >= 0 && carry; --i)
+	std::string s = num.str();
+	int sum = 0;
+	for (char c : s)
 	{
-		int sum = digits[i] + carry;
-		digits[i] = sum % 10;
-		carry = sum / 10;
+		sum += c - '0';
 	}
+	return sum;
 }
 
-ull digitsToNumber(const std::vector<short>& digits)
+cpp_int Pow(unsigned int n, unsigned int base)
 {
-	ull res = 0;
-	for (const int d : digits)
+	cpp_int result = n;
+	for (int i = 0; i < base; ++i)
 	{
-		res *= 10;
-		res += d;
+		result *= 10;
 	}
-	return res;
+	return result;
 }
 
-void fillVector(std::vector<short>& v, short n)
+void SplitTicket(int N, const std::string& ticket, cpp_int& s1, cpp_int& s2)
 {
-	for (short& i : v)
+	for (int i = 0; i < N; ++i)
 	{
-		i = n;
-	}
-}
-
-ull CalculateSum(const std::vector<short>& v)
-{
-	ull res = 0;
-	std::ranges::for_each(v, [&res](short digit) { res += digit; });
-	return res;
-}
-
-ull solve(int N, const std::string& ticketStr)
-{
-	std::vector<short> digits(2 * N);
-	std::vector<short> s1(N);
-	std::vector<short> s2(N);
-	for (int i = 0; i < 2 * N; ++i)
-	{
-		digits[i] = static_cast<short>(ticketStr[i] - '0');
+		s1 *= 10;
+		s1 += static_cast<short>(ticket[i] - '0');
 	}
 	for (int i = 0; i < N; ++i)
 	{
-		s1[i] = digits[i];
+		s2 *= 10;
+		s2 += static_cast<short>(ticket[i + N] - '0');
 	}
-	for (int i = 0; i <= N; ++i)
-	{
-		s2[i] = digits[i + N];
-	}
+}
 
-	ull steps = 0;
+cpp_int Solve(int N, const std::string& ticketStr)
+{
+	cpp_int s1 = 0;
+	cpp_int s2 = 0;
+	cpp_int steps = 0;
+	SplitTicket(N, ticketStr, s1, s2);
 	ull sum1 = CalculateSum(s1);
 	ull sum2 = CalculateSum(s2);
 
@@ -112,16 +95,18 @@ ull solve(int N, const std::string& ticketStr)
 
 	while (sum1 != sum2)
 	{
-		if (sum1 < s2.front())
+		if (sum1 < static_cast<ull>(s2.str().front() - '0'))
 		{
-			incrementTicket(s1);
-			steps += std::pow(10, N) - digitsToNumber(s2);
-			fillVector(s2, 0);
-			continue;
+			++s1;
+			cpp_int border = Pow(10, N);
+			steps += border - s2;
+			s2 = 0;
 		}
-
-		incrementTicket(s2);
-		++steps;
+		else
+		{
+			++s2;
+			++steps;
+		}
 
 		sum1 = CalculateSum(s1);
 		sum2 = CalculateSum(s2);
@@ -135,7 +120,7 @@ int main(const int _, const char* argv[])
 	int N;
 	std::string ticket;
 	readInput(argv[1], N, ticket);
-	ull answer = solve(N, ticket);
-	writeOutput(argv[2], answer);
+	cpp_int answer = Solve(N, ticket);
+	writeOutput(argv[2], answer.str());
 	return 0;
 }
