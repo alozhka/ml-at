@@ -114,40 +114,30 @@ cpp_int Solve(int N, const std::string& ticketStr)
 
 	while (sum1 != sum2)
 	{
+		ull tempSum = 0, pos = 0;
+		std::string s2str = s2.str();
 		if (sum1 < sum2)
 		{
-			ull tempSum = 0, pos = 0;
 			for (; tempSum < sum1; ++pos)
 			{
 				tempSum += static_cast<ull>(s2.str()[pos] - '0');
 			}
-			--pos;
-			cpp_int oldS2 = s2;
-			s2 = RoundUpToPosition(s2, N - pos);
-			steps += s2 - oldS2;
-			if (s2.str().length() > N)
-			{
-				++s1;
-				s2 = 0;
-			}
 		}
 		else
 		{
-			ull tempSum = 0, pos = 0;
-			std::string s2str = s2.str();
 			for (; sum1 <= 9 * (s2str.length() - pos) + tempSum; ++pos)
 			{
 				tempSum += static_cast<ull>(s2str[pos] - '0');
 			}
-			--pos;
-			cpp_int oldS2 = s2;
-			s2 = RoundUpToPosition(s2, s2str.length() - pos);
-			steps += s2 - oldS2;
-			if (s2.str().length() > N)
-			{
-				++s1;
-				s2 = 0;
-			}
+		}
+		--pos;
+		cpp_int oldS2 = s2;
+		s2 = RoundUpToPosition(s2, s2str.length() - pos);
+		steps += s2 - oldS2;
+		if (s2.str().length() > N)
+		{
+			++s1;
+			s2 = 0;
 		}
 
 		sum1 = CalculateSum(s1);
