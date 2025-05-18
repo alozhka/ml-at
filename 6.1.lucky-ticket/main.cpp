@@ -33,6 +33,10 @@ using namespace boost::multiprecision;
 void readInput(std::string_view filename, int& N, std::string& ticket)
 {
 	std::ifstream fin(filename.data());
+	if (!fin.is_open())
+	{
+		throw std::runtime_error("Could not open file " + std::string(filename));
+	}
 	fin >> N >> ticket;
 	fin.close();
 }
@@ -79,7 +83,7 @@ void SplitTicket(int N, const std::string& ticket, cpp_int& s1, cpp_int& s2)
 	}
 }
 
-cpp_int round_up_to_next_digit(const cpp_int& x, short round)
+cpp_int RoundUpToPosition(const cpp_int& x, short round)
 {
 	if (x <= 0)
 		return 1;
@@ -119,9 +123,9 @@ cpp_int Solve(int N, const std::string& ticketStr)
 			}
 			--pos;
 			cpp_int oldS2 = s2;
-			s2 = round_up_to_next_digit(s2, N - pos);
+			s2 = RoundUpToPosition(s2, N - pos);
 			steps += s2 - oldS2;
-			if (s2.str(0, 0).length() > N)
+			if (s2.str().length() > N)
 			{
 				++s1;
 				s2 = 0;
@@ -129,8 +133,21 @@ cpp_int Solve(int N, const std::string& ticketStr)
 		}
 		else
 		{
-			++s2;
-			++steps;
+			ull tempSum = 0, pos = 0;
+			std::string s2str = s2.str();
+			for (; sum1 <= 9 * (s2str.length() - pos) + tempSum; ++pos)
+			{
+				tempSum += static_cast<ull>(s2str[pos] - '0');
+			}
+			--pos;
+			cpp_int oldS2 = s2;
+			s2 = RoundUpToPosition(s2, s2str.length() - pos);
+			steps += s2 - oldS2;
+			if (s2.str().length() > N)
+			{
+				++s1;
+				s2 = 0;
+			}
 		}
 
 		sum1 = CalculateSum(s1);
