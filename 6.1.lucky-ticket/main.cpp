@@ -113,10 +113,11 @@ cpp_int Solve(int N, const std::string& ticketStr)
 		if (sum1 < sum2)
 		{
 			ull tempSum = 0, pos = 0;
-			for (; tempSum < sum2; ++pos)
+			for (; tempSum < sum1; ++pos)
 			{
 				tempSum += static_cast<ull>(s2.str()[pos] - '0');
 			}
+			--pos;
 			cpp_int oldS2 = s2;
 			s2 = round_up_to_next_digit(s2, N - pos);
 			steps += s2 - oldS2;
