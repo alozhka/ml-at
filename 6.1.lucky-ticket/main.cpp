@@ -79,6 +79,21 @@ void SplitTicket(int N, const std::string& ticket, cpp_int& s1, cpp_int& s2)
 	}
 }
 
+cpp_int round_up_to_next_digit(const cpp_int& x, short round)
+{
+	if (x <= 0)
+		return 1;
+
+	cpp_int base = 1;
+	for (size_t i = 1; i < round; ++i)
+		base *= 10;
+
+	// Пример: x = 234, pos = 1, base = 1000 (234 + 100)/1000 = 3
+	cpp_int result = ((x + base) / base) * base;
+
+	return result;
+}
+
 cpp_int Solve(int N, const std::string& ticketStr)
 {
 	cpp_int s1 = 0;
@@ -95,12 +110,21 @@ cpp_int Solve(int N, const std::string& ticketStr)
 
 	while (sum1 != sum2)
 	{
-		if (sum1 < static_cast<ull>(s2.str().front() - '0'))
+		if (sum1 < sum2)
 		{
-			++s1;
-			cpp_int border = Pow(10, N);
-			steps += border - s2;
-			s2 = 0;
+			ull tempSum = 0, pos = 0;
+			for (; tempSum < sum2; ++pos)
+			{
+				tempSum += static_cast<ull>(s2.str()[pos] - '0');
+			}
+			cpp_int oldS2 = s2;
+			s2 = round_up_to_next_digit(s2, N - pos);
+			steps += s2 - oldS2;
+			if (s2.str(0, 0).length() > N)
+			{
+				++s1;
+				s2 = 0;
+			}
 		}
 		else
 		{
